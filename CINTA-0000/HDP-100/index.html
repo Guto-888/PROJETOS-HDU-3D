@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <title>HDU | HDP-100 | Modelo 3D</title>
+
+  <!-- Visualizador 3D -->
+  <script type="module"
+    src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js">
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: #f3f3f3;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #222;
+    }
+
+    header {
+      background: #111;
+      color: #fff;
+      padding: 14px 16px;
+      text-align: center;
+    }
+
+    header .brand {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+
+    header .sub {
+      margin-top: 4px;
+      font-size: 13px;
+      opacity: .85;
+    }
+
+    main {
+      width: min(1200px, 100%);
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    .viewer-box {
+      position: relative;
+      width: 100%;
+      height: min(78vh, 850px);
+      min-height: 420px;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,.10);
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      --poster-color: #fff;
+    }
+
+    .loading {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      font-size: 16px;
+      background: rgba(255,255,255,.94);
+      padding: 16px 22px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.12);
+      z-index: 2;
+    }
+
+    .error {
+      display: none;
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      z-index: 3;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .info {
+      text-align: center;
+      padding: 12px 4px 4px;
+      font-size: 14px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 0 4px;
+    }
+
+    button {
+      border: 1px solid #aaa;
+      background: #fff;
+      color: #222;
+      border-radius: 7px;
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    button:active { transform: scale(.98); }
+
+    .footer {
+      text-align: center;
+      color: #666;
+      font-size: 12px;
+      padding: 12px 0 20px;
+    }
+
+    @media (max-width: 600px) {
+      .viewer-box {
+        height: 72vh;
+        min-height: 360px;
+      }
+      button {
+        flex: 1 1 40%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="brand">HDU — MODELO 3D</div>
+    <div class="sub">Visualização do equipamento</div>
+  </header>
+
+  <main>
+    <div class="viewer-box">
+      <div id="loading" class="loading">Carregando modelo 3D...</div>
+
+      <model-viewer
+        id="modelo"
+        src="./HDP-100.glb"
+        alt="Modelo 3D HDP-100"
+        camera-controls
+        auto-rotate
+        shadow-intensity="1"
+        exposure="1"
+        touch-action="pan-y"
+        interaction-prompt="auto"
+        loading="eager"
+        reveal="auto">
+      </model-viewer>
+
+      <div id="error" class="error">
+        <strong>Não foi possível carregar o modelo 3D.</strong><br>
+        Verifique se o arquivo <b>HDP-100.glb</b> está na mesma pasta deste
+        <b>index.html</b>.
+      </div>
+    </div>
+
+    <div class="info">
+      <strong>HDP-100</strong><br>
+      Arraste para girar • use dois dedos para zoom
+    </div>
+
+    <div class="controls">
+      <button onclick="resetModel()">↺ Centralizar</button>
+      <button onclick="rotateLeft()">⟲ Girar esquerda</button>
+      <button onclick="rotateRight()">⟳ Girar direita</button>
+      <button onclick="fullScreen()">⛶ Tela cheia</button>
+    </div>
+
+    <div class="footer">HDU • Visualização 3D</div>
+  </main>
+
+  <script>
+    const viewer = document.getElementById("modelo");
+    const loading = document.getElementById("loading");
+    const errorBox = document.getElementById("error");
+
+    viewer.addEventListener("load", () => {
+      loading.style.display = "none";
+    });
+
+    viewer.addEventListener("error", () => {
+      loading.style.display = "none";
+      errorBox.style.display = "block";
+    });
+
+    function resetModel() {
+      viewer.cameraOrbit = "auto auto auto";
+      viewer.fieldOfView = "auto";
+    }
+
+    function rotateLeft() {
+      const current = viewer.getCameraOrbit();
+      viewer.cameraOrbit = (current.theta - 30) + "deg " +
+                           current.phi + "deg " +
+                           current.radius;
+    }
+
+    function rotateRight() {
+      const current = viewer.getCameraOrbit();
+      viewer.cameraOrbit = (current.theta + 30) + "deg " +
+                           current.phi + "deg " +
+                           current.radius;
+    }
+
+    function fullScreen() {
+      const box = document.querySelector(".viewer-box");
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else if (box.requestFullscreen) {
+        box.requestFullscreen();
+      }
+    }
+  </script>
+</body>
+</html>
