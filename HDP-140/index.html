@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HDP-140 — Modelo 3D</title>
+<style>
+:root{--bg:#DDE1E6;--bg2:#EDEFF2;--panel:rgba(255,255,255,.88);--ink:#1A2027;--muted:#5C6874;--line:#BFC7CF;--accent:#9A6B00}
+*{box-sizing:border-box} html,body{height:100%;margin:0}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+.stage{height:100%;display:grid;grid-template-rows:auto 1fr auto;background:linear-gradient(to bottom,var(--bg2),var(--bg) 58%,#C8CDD3)}
+header{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--panel);z-index:3}
+.mark{font-weight:700;letter-spacing:.12em;border:2px solid var(--ink);padding:4px 7px}
+.id{font-weight:700;font-size:21px}.id span{font-weight:400;color:var(--muted);font-size:14px;margin-left:8px}
+.spacer{flex:1}
+button{font:inherit;cursor:pointer}
+.theme-btn,.ctl{color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:3px;padding:8px 13px}
+.viewport{position:relative;min-height:0}
+model-viewer{width:100%;height:100%;background:transparent;outline:none}
+.specs{position:absolute;top:16px;right:16px;z-index:2;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 14px;min-width:175px;opacity:0;transition:opacity .3s}
+.specs.ready{opacity:1}.specs h2{margin:0 0 8px;font-size:12px;color:var(--muted)}
+.specs dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:5px 16px}.specs dt{color:var(--muted)}.specs dd{margin:0;font-weight:600;text-align:right}
+.curtain{position:absolute;inset:0;z-index:4;display:grid;place-content:center;justify-items:center;gap:14px;padding:24px;text-align:center;background:var(--bg)}
+.curtain[hidden]{display:none}.curtain .title{font-size:28px;font-weight:700}.curtain p{margin:0;color:var(--muted);max-width:42ch}
+.bar{width:240px;height:4px;background:var(--line);overflow:hidden;border-radius:2px}.bar i{display:block;height:100%;width:0;background:var(--accent)}
+footer{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid var(--line);background:var(--panel);z-index:3}
+.hint{flex:1;margin:0;color:var(--muted);font-size:13px}
+.primary{background:var(--accent);border-color:var(--accent);font-weight:700}
+@media(max-width:640px){header{padding:11px 14px}.id{font-size:18px}.id span{display:none}.specs{left:10px;right:10px;top:10px}.specs .note{display:none}footer{flex-wrap:wrap;padding:10px 14px}.hint{order:3;flex-basis:100%}.ctl{flex:1}}
+</style>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.3.1/dist/model-viewer.min.js"></script>
+</head>
+<body>
+<div class="stage">
+<header>
+  <div class="mark">HDU</div>
+  <div class="id">HDP-140 <span>conjunto montado</span></div>
+  <div class="spacer"></div>
+  <button class="theme-btn" id="theme">Modo escuro</button>
+</header>
+
+<div class="viewport">
+  <model-viewer id="mv"
+    src="./HDP-140.glb"
+    alt="Modelo 3D do conjunto HDP-140"
+    camera-controls
+    touch-action="pan-y"
+    interaction-prompt="none"
+    shadow-intensity="0.9"
+    shadow-softness="0.7"
+    exposure="1.05"
+    environment-image="neutral"
+    camera-orbit="35deg 72deg auto"
+    min-field-of-view="5deg"
+    ar
+    ar-modes="webxr scene-viewer quick-look"
+    ar-scale="fixed">
+  </model-viewer>
+
+  <aside class="specs" id="specs">
+    <h2>Dimensões do modelo</h2>
+    <dl>
+      <dt>Altura</dt><dd id="d-h">—</dd>
+      <dt>Largura</dt><dd id="d-w">—</dd>
+      <dt>Profundidade</dt><dd id="d-d">—</dd>
+    </dl>
+    <p class="note">Medidas extraídas da caixa envolvente do modelo. Consulte o desenho de fabricação para cotas oficiais.</p>
+  </aside>
+
+  <div class="curtain" id="curtain">
+    <div class="title">HDP-140</div>
+    <div class="bar"><i id="bar"></i></div>
+    <p id="msg">Carregando o modelo 3D...</p>
+  </div>
+</div>
+
+<footer>
+  <p class="hint" id="hint">Arraste para girar. Use dois dedos ou a roda do mouse para zoom.</p>
+  <button class="ctl" id="spin">Girar</button>
+  <button class="ctl" id="frame">Enquadrar</button>
+  <button class="ctl primary" id="ar" hidden>Ver no local</button>
+</footer>
+</div>
+
+<script>
+const mv=document.getElementById('mv');
+const curtain=document.getElementById('curtain');
+const msg=document.getElementById('msg');
+const bar=document.getElementById('bar');
+const specs=document.getElementById('specs');
+const spin=document.getElementById('spin');
+const frame=document.getElementById('frame');
+const arBtn=document.getElementById('ar');
+const hint=document.getElementById('hint');
+const HOME='35deg 72deg auto';
+
+function fail(text){
+  bar.parentElement.style.display='none';
+  msg.textContent=text;
+  curtain.hidden=false;
+}
+mv.addEventListener('progress',e=>bar.style.width=Math.round(e.detail.totalProgress*100)+'%');
+mv.addEventListener('load',()=>{
+  curtain.hidden=true;
+  try{
+    const d=mv.getDimensions(), fmt=v=>v.toFixed(2).replace('.',',')+' m';
+    document.getElementById('d-h').textContent=fmt(d.y);
+    document.getElementById('d-w').textContent=fmt(Math.max(d.x,d.z));
+    document.getElementById('d-d').textContent=fmt(Math.min(d.x,d.z));
+    specs.classList.add('ready');
+  }catch(e){}
+  if(mv.canActivateAR){arBtn.hidden=false;hint.textContent='Arraste para girar. Toque em “Ver no local” para posicionar o equipamento.'}
+});
+mv.addEventListener('error',()=>fail('Não foi possível carregar HDP-140.glb. Confirme que HDP-140.glb está na mesma pasta deste index.html.'));
+spin.addEventListener('click',()=>{mv.autoRotate=!mv.autoRotate;spin.textContent=mv.autoRotate?'Parar':'Girar'});
+frame.addEventListener('click',()=>{mv.autoRotate=false;spin.textContent='Girar';mv.resetTurntableRotation();mv.cameraOrbit=HOME;mv.cameraTarget='auto auto auto';mv.fieldOfView='auto';mv.jumpCameraToGoal()});
+arBtn.addEventListener('click',()=>mv.activateAR());
+
+const themeBtn=document.getElementById('theme');
+let dark=false;
+function paint(){document.documentElement.style.setProperty('--bg',dark?'#161B21':'#DDE1E6');document.documentElement.style.setProperty('--bg2',dark?'#1E242B':'#EDEFF2');document.documentElement.style.setProperty('--panel',dark?'rgba(22,27,33,.88)':'rgba(255,255,255,.88)');document.documentElement.style.setProperty('--ink',dark?'#E9EDF1':'#1A2027');document.documentElement.style.setProperty('--muted',dark?'#97A3AF':'#5C6874');document.documentElement.style.setProperty('--line',dark?'#333D48':'#BFC7CF');document.documentElement.style.setProperty('--accent',dark?'#FFC300':'#9A6B00');themeBtn.textContent=dark?'Modo claro':'Modo escuro'}
+themeBtn.addEventListener('click',()=>{dark=!dark;paint()});paint();
+</script>
+</body>
+</html>
